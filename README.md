@@ -4,4 +4,4 @@ Quiz de estudio con 6 unidades y un examen final integrador: opción múltiple, 
 
 Material de estudio para alumnos. No es un HTML oficial de la Prefectura Naval Argentina.
 
-Se abre en: https://nahuelmartinez22.github.io/quiz-armas-y-tiro/
+Se abre en: https://nahuelmartinez22.github.io/Quiz-armas-y-tiro/
