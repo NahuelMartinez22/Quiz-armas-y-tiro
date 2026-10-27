@@ -141,7 +141,8 @@ main.home .wrap { padding-block: 28px 48px; display: grid; gap: 28px; }
   .final > svg { display: none; }
   .final .actions { justify-items: stretch; }
 }
-.figbtns { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.figbtns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 640px) { .figbtns { grid-template-columns: 1fr; } }
 .figbtn {
   display: grid; grid-template-columns: 104px 1fr; gap: 14px; align-items: center; text-align: left;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; min-width: 0;
@@ -1060,6 +1061,33 @@ const FIG_PRACTICE = [
   { key: "anima", title: "Calibre real y nominal", sub: "Corte del cañón estriado" }
 ];
 
+/* ---------- Reglas de oro para completar (espacios al azar) ---------- */
+const GOLD_RULES = [
+  { text: "No dirigir la boca del tubo cañón a nada, ni a nadie, que no desea dañar.", cand: ["dirigir", "boca", "tubo", "cañón", "nada", "nadie", "desea", "dañar"] },
+  { text: "Considerar a toda arma cargada y sin seguro, aun sabiendo que no lo está.", cand: ["Considerar", "toda", "arma", "cargada", "seguro", "sabiendo"] },
+  { text: "Presionar la cola disparadora, solo cuando estoy seguro de mi blanco, sabiendo lo que hay por delante, por detrás y en ambos laterales.", cand: ["Presionar", "cola", "disparadora", "seguro", "blanco", "sabiendo", "delante", "detrás", "ambos", "laterales"] },
+  { text: "Mantener el dedo fuera del arco guardamonte, siempre y en todo momento hasta tener identificado el blanco.", cand: ["Mantener", "dedo", "fuera", "arco", "guardamonte", "siempre", "momento", "identificado", "blanco"] }
+];
+let lastRules = "";
+function buildRulesQuestion() {
+  let text;
+  do {
+    text = GOLD_RULES.map((r, i) => {
+      const pick = new Set(shuffle(r.cand).slice(0, Math.random() < .5 ? 2 : 3));
+      const used = new Set();
+      const t = r.text.split(/([A-Za-zÁÉÍÓÚáéíóúÑñÜü]+)/).map(tok => {
+        if (pick.has(tok) && !used.has(tok)) { used.add(tok); return `{{${tok}}}`; }
+        return tok;
+      }).join("");
+      return `${i + 1}. ${t}`;
+    }).join("\n");
+  } while (text === lastRules);
+  lastRules = text;
+  return { t: "fill", q: "Completá las cuatro reglas de oro.", text, uid: "u2", key: "rules",
+    exp: "Las cuatro reglas de oro, textuales del material. Cada vez que repetís, cambian las palabras que faltan.",
+    src: "Medidas de seguridad · reglas de oro" };
+}
+
 /* ---------- Estado ---------- */
 let S = null;
 let timerId = null;
@@ -1085,6 +1113,9 @@ function startQuiz(kind, payload) {
     let rest = FINAL_N - quotas.reduce((a, b) => a + b, 0);
     shuffle(UNITS.map((_, i) => i)).slice(0, rest).forEach(i => quotas[i]++);
     qs = shuffle(UNITS.flatMap((u, i) => shuffle(u.questions).slice(0, quotas[i])));
+  } else if (kind === "rules") {
+    id = "rules"; title = "Reglas de oro"; sub = "Repaso para completar";
+    qs = [buildRulesQuestion()];
   } else if (kind === "fig") {
     const f = FIG_PRACTICE.find(x => x.key === payload);
     id = "fig-" + f.key; title = f.title; sub = "Repaso de imagen";
@@ -1140,6 +1171,14 @@ function anchorsIcon(size = 46) {
     <g transform="translate(38 33) rotate(52) translate(-24 -28)">${anchorShape()}</g></svg>`;
 }
 
+function rulesThumb() {
+  const rows = [[18, 30, 16], [26, 14, 24], [12, 34, 10], [22, 18, 22]];
+  return `<svg viewBox="0 0 104 84" aria-hidden="true">${rows.map((r, i) => {
+    const y = 14 + i * 18; let x = 20, out = `<text x="7" y="${y + 4}" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#13212e">${i + 1}</text>`;
+    r.forEach((w, j) => { out += j === 1 ? `<line x1="${x}" y1="${y + 4}" x2="${x + w}" y2="${y + 4}" stroke="#c99634" stroke-width="3"/>` : `<rect x="${x}" y="${y - 2}" width="${w}" height="5" rx="2.5" fill="#9aa8b6"/>`; x += w + 4; });
+    return out; }).join("")}</svg>`;
+}
+
 function renderHome() {
   clearInterval(timerId); S = null;
   const best = store.get();
@@ -1173,12 +1212,16 @@ function renderHome() {
       <div class="grid">${cards}</div>
     </section>
     <section style="display:grid;gap:14px">
-      <h2 class="sec-title">Imágenes para repasar <small>identificá las partes · podés mostrar los nombres para estudiar</small></h2>
+      <h2 class="sec-title">Repaso rápido <small>imágenes para identificar partes y reglas de oro para completar</small></h2>
       <div class="figbtns">${FIG_PRACTICE.map(f => `
         <button class="figbtn" id="fig-${f.key}" data-fig="${f.key}">
           <span class="th">${figSVG(f.key)}</span>
           <span class="tx"><b>${esc(f.title)}</b><small>${esc(f.sub)} · ${FIGS[f.key].targets.length} partes</small><span class="go">Practicar →</span></span>
-        </button>`).join("")}</div>
+        </button>`).join("")}
+        <button class="figbtn" id="rules-go">
+          <span class="th">${rulesThumb()}</span>
+          <span class="tx"><b>Reglas de oro</b><small>Las 4 reglas para completar · cambian las palabras en cada intento</small><span class="go">Practicar →</span></span>
+        </button></div>
     </section>
     <section class="final">
       ${anchorsIcon(84)}
@@ -1192,6 +1235,7 @@ function renderHome() {
   </div></main>`;
   $$("[data-unit]").forEach(b => b.onclick = () => startQuiz("unit", b.dataset.unit));
   $$("[data-fig]").forEach(b => b.onclick = () => startQuiz("fig", b.dataset.fig));
+  $("#rules-go").onclick = () => startQuiz("rules");
   $("#go-final").onclick = () => startQuiz("final", { timed: $("#timed").checked });
   window.scrollTo(0, 0);
 }
@@ -1556,7 +1600,7 @@ function renderResults(pts, n, pct) {
   setTab(wrong.length > 0);
   $("#home2").onclick = renderHome; $("#home3").onclick = renderHome;
   const prev = { kind: S.kind, id: S.id, title: S.title, figKey: S.figKey };
-  $("#again").onclick = () => prev.kind === "final" ? startQuiz("final", { timed: S.limit > 0 }) : prev.kind === "unit" ? startQuiz("unit", prev.id) : prev.kind === "fig" ? startQuiz("fig", prev.figKey) : startQuiz("retry", { id: prev.id, title: prev.title, qs: S.views.map(v => v.q) });
+  $("#again").onclick = () => prev.kind === "final" ? startQuiz("final", { timed: S.limit > 0 }) : prev.kind === "unit" ? startQuiz("unit", prev.id) : prev.kind === "fig" ? startQuiz("fig", prev.figKey) : prev.kind === "rules" ? startQuiz("rules") : startQuiz("retry", { id: prev.id, title: prev.title, qs: S.views.map(v => v.q) });
   if (wrong.length) $("#retry-wrong").onclick = () => startQuiz("retry", { id: prev.id, title: prev.title, qs: wrong.map(v => v.q) });
   window.scrollTo(0, 0);
 }
