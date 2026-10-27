@@ -269,6 +269,14 @@ main.quiz .wrap { padding-block: 22px 56px; }
 .lrow.bad .n { background: var(--bad); color: #fff; }
 .lrow select { width: 100%; min-width: 0; min-height: 42px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); padding: 8px 10px; }
 .lrow.ok select { border-color: var(--ok); background: var(--ok-soft); }
+.lrow .lin { width: 100%; min-width: 0; min-height: 42px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); padding: 8px 10px; font-weight: 600; }
+.lrow .lin:focus { outline: none; border-color: var(--accent); background: var(--accent-soft); }
+.lrow.ok .lin { border-color: var(--ok); background: var(--ok-soft); }
+.lrow.bad .lin { border-color: var(--bad); background: var(--bad-soft); text-decoration: line-through; }
+.modes { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 10px; justify-self: start; }
+.modes button { border: 0; background: transparent; border-radius: 7px; padding: 8px 14px; font-weight: 600; font-size: 15px; min-height: 40px; color: var(--muted); }
+.modes button small { font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-left: 4px; color: var(--bad); }
+.modes button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
 .lrow.bad select { border-color: var(--bad); background: var(--bad-soft); }
 
 /* devolución */
@@ -1088,16 +1096,38 @@ function buildRulesQuestion() {
     src: "Medidas de seguridad · reglas de oro" };
 }
 
+/* ---------- Modo "Escribir los nombres" en las imágenes ---------- */
+let figMode = "select";
+const NAME_ALTS = {
+  "Seguro ambidiestro": ["Seguro ambidextro"],
+  "Cola disparadora": ["Cola del disparador"],
+  "Arco guardamonte": ["Guardamonte"],
+  "Retén de cargador": ["Retén del cargador"],
+  "Interceptor de la corredera": ["Interceptor de corredera"],
+  "Fulminante": ["Cápsula fulminante"],
+  "Carga propulsora (pólvora)": ["Carga impulsora"],
+  "Estría (surco o fondo)": ["Raya", "Estría o raya"]
+};
+const normName = s => norm(s).replace(/[()]/g, "");
+function nameAlts(name) {
+  const out = new Set([name, ...(NAME_ALTS[name] || [])]);
+  const base = name.replace(/\s*\(.*?\)\s*/g, " ").trim();
+  const inner = (name.match(/\((.*?)\)/) || [])[1];
+  [base, inner].filter(Boolean).forEach(x => { out.add(x); x.split(/\s+o\s+/).forEach(y => out.add(y)); });
+  return [...out].map(normName);
+}
+function nameMatches(name, typed) { const t = normName(typed || ""); return t !== "" && nameAlts(name).includes(t); }
+
 /* ---------- Estado ---------- */
 let S = null;
 let timerId = null;
 const app = () => $("#app");
 
-function prepare(q) {
+function prepare(q, kind) {
   const v = { q };
   if (q.t === "mc") v.perm = shuffle(q.o.map((_, i) => i));
   if (q.t === "order") { let p; do { p = shuffle(q.items.map((_, i) => i)); } while (p.every((x, i) => x === i)); v.arr = p; }
-  if (q.t === "label") v.choices = {};
+  if (q.t === "label") { v.choices = {}; v.mode = kind === "fig" ? figMode : "select"; }
   if (q.t === "fill") { v.parsed = parseFill(q.text); v.vals = []; }
   return v;
 }
@@ -1124,7 +1154,7 @@ function startQuiz(kind, payload) {
     id = payload.id; title = payload.title; sub = "Repaso de errores";
     qs = shuffle(payload.qs);
   }
-  S = { kind, figKey: kind === "fig" ? payload : null, id, title, sub, views: qs.map(prepare), i: 0, res: [], t0: Date.now(), limit, done: false, timeout: false, checked: false };
+  S = { kind, figKey: kind === "fig" ? payload : null, id, title, sub, views: qs.map(q => prepare(q, kind)), i: 0, res: [], t0: Date.now(), limit, done: false, timeout: false, checked: false };
   renderQuiz();
   clearInterval(timerId); timerId = setInterval(tick, 500); tick();
   window.scrollTo(0, 0);
@@ -1290,14 +1320,20 @@ function renderQuestion() {
     hint = "Arrastrá desde ⠿ o usá las flechas. Cuenta como correcta solo si el orden completo es correcto.";
     body = `<ol class="olist" id="olist">${v.arr.map(k => orderItem(q, k)).join("")}</ol>`;
   } else if (q.t === "label") {
-    hint = "Elegí el nombre que corresponde a cada número. Hay nombres de más que no van.";
+    const write = v.mode === "write";
+    hint = write ? "Escribí el nombre de cada parte. Se acepta sin tildes ni mayúsculas." : "Elegí el nombre que corresponde a cada número. Hay nombres de más que no van.";
     const F = FIGS[q.fig];
     const names = [...F.targets.map(t => t.name), ...F.extra].sort((a, b) => a.localeCompare(b, "es"));
     const legend = S.kind === "fig" ? `<ol class="lg" id="legend" hidden>${F.targets.slice().sort((a, b) => a.n - b.n).map(t => `<li><span class="n">${t.n}</span>${esc(t.name)}</li>`).join("")}</ol>` : "";
-    body = `<div class="plate" id="fig"></div>${legend}
+    const modes = S.kind === "fig" ? `<div class="modes" role="group" aria-label="Dificultad">
+        <button type="button" data-mode="select" aria-pressed="${!write}">Elegir de la lista</button>
+        <button type="button" data-mode="write" aria-pressed="${write}">Escribir los nombres <small>difícil</small></button></div>` : "";
+    body = `${modes}<div class="plate" id="fig"></div>${legend}
       <div class="lrows">${F.targets.slice().sort((a, b) => a.n - b.n).map(t => `
         <div class="lrow" data-n="${t.n}"><span class="n">${t.n}</span><div style="display:grid;gap:2px;min-width:0">
-          <select id="sel-${S.i}-${t.n}" aria-label="Parte número ${t.n}"><option value="">Elegí…</option>${names.map(nm => `<option>${esc(nm)}</option>`).join("")}</select>
+          ${write
+            ? `<input class="lin" id="sel-${S.i}-${t.n}" aria-label="Nombre de la parte número ${t.n}" placeholder="Escribí el nombre…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">`
+            : `<select id="sel-${S.i}-${t.n}" aria-label="Parte número ${t.n}"><option value="">Elegí…</option>${names.map(nm => `<option>${esc(nm)}</option>`).join("")}</select>`}
         </div></div>`).join("")}</div>`;
   }
   $("#qwrap").innerHTML = `
@@ -1314,6 +1350,10 @@ function renderQuestion() {
   </article>`;
   drawFig(v);
   wireQuestion(v);
+  $$(".modes button").forEach(b => b.onclick = () => {
+    if (S.checked || v.mode === b.dataset.mode) return;
+    v.mode = figMode = b.dataset.mode; v.choices = {}; renderQuestion();
+  });
   const nb = $("#names");
   if (nb) nb.onclick = () => {
     const lg = $("#legend"), show = lg.hidden;
@@ -1404,7 +1444,7 @@ function grade(v) {
   if (q.t === "order") { const pos = v.arr.map((k, i) => k === i); return { score: pos.every(Boolean) ? 1 : 0, pos, nOk: pos.filter(Boolean).length }; }
   if (q.t === "label") {
     const F = FIGS[q.fig]; const st = {};
-    F.targets.forEach(t => { st[t.n] = (v.choices[t.n] || "") === t.name ? "ok" : "bad"; });
+    F.targets.forEach(t => { st[t.n] = (v.mode === "write" ? nameMatches(t.name, v.choices[t.n]) : (v.choices[t.n] || "") === t.name) ? "ok" : "bad"; });
     const ok = Object.values(st).filter(x => x === "ok").length;
     return { score: ok / F.targets.length, st, ok, total: F.targets.length };
   }
@@ -1479,8 +1519,10 @@ function showFeedback(v, g) {
     drawFig(v);
     FIGS[q.fig].targets.forEach(t => {
       const row = $(`.lrow[data-n="${t.n}"]`), sel = $(`#sel-${S.i}-${t.n}`);
-      sel.disabled = true; row.classList.add(g.st[t.n]);
+      if (v.mode === "write") sel.readOnly = true; else sel.disabled = true;
+      row.classList.add(g.st[t.n]);
       if (g.st[t.n] === "bad") sel.insertAdjacentHTML("afterend", `<span class="fix bad">Correcto: ${esc(t.name)}</span>`);
+      else if (v.mode === "write" && (v.choices[t.n] || "").trim() !== t.name) sel.insertAdjacentHTML("afterend", `<span class="fix ok">Nombre: ${esc(t.name)}</span>`);
     });
   }
   fb.className = `fb ${cls}`;
@@ -1527,7 +1569,7 @@ function answerSummary(v) {
   if (q.t === "order") return g.score === 1 ? `<div><span class="lbl">Orden</span><span class="righttxt">Correcto</span></div>` : `<div><span class="lbl">Tu orden</span>${v.arr.map((k, i) => `<span class="${k === i ? "righttxt" : "wrongtxt"}">${i + 1}. ${esc(q.items[k])}</span>`).join(" · ")}</div>` + correctSummary(q);
   if (q.t === "label") return FIGS[q.fig].targets.slice().sort((a, b) => a.n - b.n).map(t => {
     const c = v.choices[t.n] || "";
-    return `<div><span class="lbl">N.° ${t.n}</span>${c === t.name ? `<span class="righttxt">${esc(t.name)}</span>` : `<span class="wrongtxt">${esc(c || "—")}</span> → <span class="righttxt">${esc(t.name)}</span>`}</div>`;
+    return `<div><span class="lbl">N.° ${t.n}</span>${g.st[t.n] === "ok" ? `<span class="righttxt">${esc(t.name)}</span>` : `<span class="wrongtxt">${esc(c || "—")}</span> → <span class="righttxt">${esc(t.name)}</span>`}</div>`;
   }).join("");
 }
 function correctSummary(q) {
