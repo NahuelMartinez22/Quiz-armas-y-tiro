@@ -69,7 +69,7 @@ body {
   font-family: var(--f-body); font-size: 16px; line-height: 1.5;
 }
 img, svg { max-width: 100%; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
@@ -285,6 +285,17 @@ main.quiz .wrap { padding-block: 22px 56px; }
 .lrow.bad .n { background: var(--bad); color: #fff; }
 .lrow select { width: 100%; min-width: 0; min-height: 42px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); padding: 8px 10px; }
 .lrow.ok select { border-color: var(--ok); background: var(--ok-soft); }
+.rts { display: grid; gap: 14px; }
+.rt { display: grid; gap: 6px; padding: 12px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--surface); }
+.rt label { display: flex; gap: 10px; align-items: center; font-size: 18px; }
+.rt label .n { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-mono); font-weight: 600; background: #c99634; color: #1c2521; flex: none; font-size: 14px; }
+.rt textarea { width: 100%; min-width: 0; resize: vertical; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 12px; font-size: 17px; line-height: 1.45; font-weight: 500; }
+.rt textarea:focus { outline: none; border-color: var(--accent); background: var(--accent-soft); }
+.rt.ok { border-color: var(--ok); background: var(--ok-soft); }
+.rt.part { border-color: var(--warn); background: var(--warn-soft); }
+.rt.bad { border-color: var(--bad); background: var(--bad-soft); }
+.rtres { margin: 0; font-size: 16px; line-height: 1.55; }
+mark.miss { background: transparent; color: var(--bad); font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; }
 .lrow .lin { width: 100%; min-width: 0; min-height: 42px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); padding: 8px 10px; font-weight: 600; }
 .lrow .lin:focus { outline: none; border-color: var(--accent); background: var(--accent-soft); }
 .lrow.ok .lin { border-color: var(--ok); background: var(--ok-soft); }
@@ -1052,7 +1063,7 @@ function rightSVG(k = 1) {
 const PASS = 70;
 const FINAL_N = 40;
 const FINAL_MIN = 60;
-const TYPE_LABEL = { mc: "Opción múltiple", tf: "Verdadero o falso", fill: "Completar", order: "Ordenar", label: "Identificar partes" };
+const TYPE_LABEL = { mc: "Opción múltiple", tf: "Verdadero o falso", fill: "Completar", order: "Ordenar", label: "Identificar partes", rtext: "Escribir completo" };
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
@@ -1135,6 +1146,21 @@ function nameAlts(name) {
 }
 function nameMatches(name, typed) { const t = normName(typed || ""); return t !== "" && nameAlts(name).includes(t); }
 
+let rulesMode = "fill";
+function ruleWords(s) { return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().split(/[^a-z0-9ñ]+/).filter(Boolean); }
+function buildRulesTextQuestion() {
+  return { t: "rtext", q: "Escribí las cuatro reglas de oro completas.", rules: GOLD_RULES.map(r => r.text), uid: "u2", key: "rules-w",
+    exp: "Las cuatro reglas de oro, textuales del material. Se corrige palabra por palabra; no cuentan las tildes, las mayúsculas ni la puntuación.",
+    src: "Medidas de seguridad · reglas de oro" };
+}
+function lcsMatch(a, b) {
+  const n = a.length, m = b.length, d = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) d[i][j] = a[i] === b[j] ? d[i + 1][j + 1] + 1 : Math.max(d[i + 1][j], d[i][j + 1]);
+  const hit = new Array(n).fill(false); let i = 0, j = 0;
+  while (i < n && j < m) { if (a[i] === b[j]) { hit[i] = true; i++; j++; } else if (d[i + 1][j] >= d[i][j + 1]) i++; else j++; }
+  return { len: d[0][0], hit };
+}
+
 /* ---------- Estado ---------- */
 let S = null;
 let timerId = null;
@@ -1161,8 +1187,8 @@ function startQuiz(kind, payload) {
     shuffle(UNITS.map((_, i) => i)).slice(0, rest).forEach(i => quotas[i]++);
     qs = shuffle(UNITS.flatMap((u, i) => shuffle(u.questions).slice(0, quotas[i])));
   } else if (kind === "rules") {
-    id = "rules"; title = "Reglas de oro"; sub = "Repaso para completar";
-    qs = [buildRulesQuestion()];
+    id = "rules"; title = "Reglas de oro"; sub = "Repaso";
+    qs = [rulesMode === "write" ? buildRulesTextQuestion() : buildRulesQuestion()];
   } else if (kind === "fig") {
     const f = FIG_PRACTICE.find(x => x.key === payload);
     id = "fig-" + f.key; title = f.title; sub = "Repaso de imagen";
@@ -1267,7 +1293,7 @@ function renderHome() {
         </button>`).join("")}
         <button class="figbtn" id="rules-go">
           <span class="th">${rulesThumb()}</span>
-          <span class="tx"><b>Reglas de oro</b><small>Las 4 reglas para completar · cambian las palabras en cada intento</small><span class="go">Practicar →</span></span>
+          <span class="tx"><b>Reglas de oro</b><small>Completar palabras al azar o escribir las 4 reglas enteras</small><span class="go">Practicar →</span></span>
         </button></div>
     </section>
     <section class="final">
@@ -1336,6 +1362,13 @@ function renderQuestion() {
   } else if (q.t === "order") {
     hint = "Arrastrá desde ⠿ o usá las flechas. Cuenta como correcta solo si el orden completo es correcto.";
     body = `<ol class="olist" id="olist">${v.arr.map(k => orderItem(q, k)).join("")}</ol>`;
+  } else if (q.t === "rtext") {
+    hint = "Escribí cada regla completa. Te damos solo la primera palabra. No cuentan las tildes, las mayúsculas ni la puntuación.";
+    body = `<div class="rts">${q.rules.map((r, i) => {
+      const first = r.split(" ")[0];
+      return `<div class="rt" data-i="${i}"><label for="rt-${S.i}-${i}"><span class="n">${i + 1}</span><b>${esc(first)}…</b></label>
+        <textarea id="rt-${S.i}-${i}" rows="2" placeholder="Escribí la regla completa…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea></div>`;
+    }).join("")}</div>`;
   } else if (q.t === "label") {
     const write = v.mode === "write";
     hint = write ? "Escribí el nombre de cada parte. Se acepta sin tildes ni mayúsculas." : "Elegí el nombre que corresponde a cada número. Hay nombres de más que no van.";
@@ -1354,6 +1387,9 @@ function renderQuestion() {
         </div></div>`).join("")}</div></div>`;
   }
   app().classList.toggle("wide", q.t === "label");
+  if (S.kind === "rules") body = `<div class="modes" role="group" aria-label="Modo">
+      <button type="button" data-rmode="fill" aria-pressed="${q.t === "fill"}">Completar</button>
+      <button type="button" data-rmode="write" aria-pressed="${q.t === "rtext"}">Escribir</button></div>` + body;
   $("#qwrap").innerHTML = `
   <article class="qcard">
     <div class="qhead"><span class="qnum">Pregunta ${S.i + 1} de ${n}</span><span class="chip">${TYPE_LABEL[q.t]}</span></div>
@@ -1363,12 +1399,16 @@ function renderQuestion() {
       ${body}
     </div>
     <div class="fb" id="fb" hidden></div>
-    <div class="qactions">${S.kind === "fig" ? `<button class="btn" id="names" style="margin-right:auto" aria-pressed="false">Mostrar nombres</button>` : `<span class="kbd">${q.t === "mc" ? "Teclas A–D y Enter" : q.t === "tf" ? "Teclas V / F y Enter" : "Enter para comprobar"}</span>`}
+    <div class="qactions">${S.kind === "fig" ? `<button class="btn" id="names" style="margin-right:auto" aria-pressed="false">Mostrar nombres</button>` : `<span class="kbd">${q.t === "mc" ? "Teclas A–D y Enter" : q.t === "tf" ? "Teclas V / F y Enter" : q.t === "rtext" ? "" : "Enter para comprobar"}</span>`}
       <button class="btn primary" id="act">Comprobar</button></div>
   </article>`;
   drawFig(v);
   wireQuestion(v);
-  $$(".modes button").forEach(b => b.onclick = () => {
+  $$(".modes button[data-rmode]").forEach(b => b.onclick = () => {
+    const m = b.dataset.rmode; if (S.checked || m === rulesMode && (m === "write") === (q.t === "rtext")) return;
+    rulesMode = m; S.views[S.i] = prepare(m === "write" ? buildRulesTextQuestion() : buildRulesQuestion(), S.kind); renderQuestion();
+  });
+  $$(".modes button[data-mode]").forEach(b => b.onclick = () => {
     if (S.checked || v.mode === b.dataset.mode) return;
     v.mode = figMode = b.dataset.mode; v.choices = {}; renderQuestion();
   });
@@ -1466,6 +1506,17 @@ function grade(v) {
     const ok = Object.values(st).filter(x => x === "ok").length;
     return { score: ok / F.targets.length, st, ok, total: F.targets.length };
   }
+  if (q.t === "rtext") {
+    const per = q.rules.map((r, i) => {
+      const exp = ruleWords(r); let typ = ruleWords(v.texts[i] || "");
+      if (typ.length && typ[0] !== exp[0]) typ.unshift(exp[0]);
+      const m = lcsMatch(exp, typ);
+      const sc = typ.length ? m.len / Math.max(exp.length, typ.length) : 0;
+      return { score: sc, hit: m.hit, exact: m.len === exp.length && typ.length === exp.length };
+    });
+    const score = per.reduce((a, p) => a + (p.exact ? 1 : p.score), 0) / per.length;
+    return { score: per.every(p => p.exact) ? 1 : Math.min(score, 0.99), per };
+  }
   if (q.t === "fill") {
     const B = v.parsed.blanks, vals = v.vals;
     const res = B.map(() => ({ ok: false, show: null }));
@@ -1494,6 +1545,7 @@ function grade(v) {
 function check() {
   const v = S.views[S.i], q = v.q;
   if (q.t === "fill") v.vals = v.parsed.blanks.map((_, i) => $(`#b-${S.i}-${i}`).value);
+  if (q.t === "rtext") v.texts = q.rules.map((_, i) => $(`#rt-${S.i}-${i}`).value);
   if (q.t === "label") FIGS[q.fig].targets.forEach(t => { v.choices[t.n] = $(`#sel-${S.i}-${t.n}`).value; });
   if ((q.t === "mc" || q.t === "tf") && v.sel == null) return;
   const g = grade(v); v.g = g; S.res[S.i] = g.score; S.checked = true;
@@ -1532,6 +1584,15 @@ function showFeedback(v, g) {
       if (k !== i) li.querySelector(".txt").insertAdjacentHTML("beforeend", `<small>Va en el lugar ${k + 1}</small>`);
     });
     if (g.score === 0) { verdict += ` · ${g.nOk} de ${q.items.length} en su lugar`; extra = `<p class="right">Orden correcto:</p><ol>${q.items.map(t => `<li>${esc(t)}</li>`).join("")}</ol>`; }
+  } else if (q.t === "rtext") {
+    if (g.score > 0 && g.score < 1) verdict += ` · ${Math.round(g.score * 100)} %`;
+    q.rules.forEach((r, i) => {
+      const p = g.per[i], box = $(`.rt[data-i="${i}"]`), ta = $(`#rt-${S.i}-${i}`);
+      ta.readOnly = true; box.classList.add(p.exact ? "ok" : p.score >= .5 ? "part" : "bad");
+      let k = 0;
+      const shown = r.split(/([A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9]+)/).map(tok => /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9]+$/.test(tok) ? (p.hit[k++] ? esc(tok) : `<mark class="miss">${esc(tok)}</mark>`) : esc(tok)).join("");
+      box.insertAdjacentHTML("beforeend", `<p class="rtres"><span class="lbl">${p.exact ? "Correcta" : `Regla ${i + 1} · ${Math.round(p.score * 100)} %`}</span>${shown}</p>`);
+    });
   } else if (q.t === "label") {
     verdict += g.score < 1 && g.score > 0 ? ` · ${g.ok} de ${g.total}` : "";
     drawFig(v);
@@ -1585,6 +1646,7 @@ function answerSummary(v) {
   if (q.t === "tf") return `<div><span class="lbl">Tu respuesta</span><span class="${v.sel === q.a ? "righttxt" : "wrongtxt"}">${v.sel ? "Verdadero" : "Falso"}</span></div>` + (v.sel === q.a ? "" : correctSummary(q));
   if (q.t === "fill") return g.res.map((r, i) => `<div><span class="lbl">Espacio ${i + 1}</span>${r.ok ? `<span class="righttxt">${esc(r.show)}</span>` : `<span class="wrongtxt">${esc((v.vals[i] || "").trim() || "—")}</span> → <span class="righttxt">${esc(r.show)}</span>`}</div>`).join("");
   if (q.t === "order") return g.score === 1 ? `<div><span class="lbl">Orden</span><span class="righttxt">Correcto</span></div>` : `<div><span class="lbl">Tu orden</span>${v.arr.map((k, i) => `<span class="${k === i ? "righttxt" : "wrongtxt"}">${i + 1}. ${esc(q.items[k])}</span>`).join(" · ")}</div>` + correctSummary(q);
+  if (q.t === "rtext") return q.rules.map((r, i) => `<div><span class="lbl">Regla ${i + 1}</span>${g.per[i].exact ? `<span class="righttxt">Correcta</span>` : `<span class="wrongtxt">${Math.round(g.per[i].score * 100)} % · ${esc((v.texts[i] || "").trim() || "—")}</span><br><span class="righttxt">${esc(r)}</span>`}</div>`).join("");
   if (q.t === "label") return FIGS[q.fig].targets.slice().sort((a, b) => a.n - b.n).map(t => {
     const c = v.choices[t.n] || "";
     return `<div><span class="lbl">N.° ${t.n}</span>${g.st[t.n] === "ok" ? `<span class="righttxt">${esc(t.name)}</span>` : `<span class="wrongtxt">${esc(c || "—")}</span> → <span class="righttxt">${esc(t.name)}</span>`}</div>`;
@@ -1595,6 +1657,7 @@ function correctSummary(q) {
   if (q.t === "tf") return `<div><span class="lbl">Correcta</span><span class="righttxt">${q.a ? "Verdadero" : "Falso"}</span></div>`;
   if (q.t === "order") return `<div><span class="lbl">Correcto</span>${q.items.map((t, i) => `${i + 1}. ${esc(t)}`).join(" · ")}</div>`;
   if (q.t === "fill") return `<div><span class="lbl">Correcto</span>${parseFill(q.text).blanks.map(b => `<span class="righttxt">${esc(b[0])}</span>`).join(" · ")}</div>`;
+  if (q.t === "rtext") return q.rules.map((r, i) => `<div><span class="lbl">Regla ${i + 1}</span>${esc(r)}</div>`).join("");
   if (q.t === "label") return `<div><span class="lbl">Correcto</span>${FIGS[q.fig].targets.slice().sort((a, b) => a.n - b.n).map(t => `${t.n}. ${esc(t.name)}`).join(" · ")}</div>`;
   return "";
 }
@@ -1671,6 +1734,7 @@ document.addEventListener("keydown", e => {
   if (!S || S.done || e.altKey || e.ctrlKey || e.metaKey) return;
   const v = S.views[S.i]; if (!v) return;
   const t = e.target, typing = t && (t.tagName === "INPUT" || t.tagName === "SELECT");
+  if (e.key === "Enter" && t && t.tagName === "TEXTAREA") return;
   if (e.key === "Enter") {
     if (t && t.tagName === "BUTTON" && !t.id.startsWith("opt-")) return;
     e.preventDefault(); const act = $("#act"); if (act && !act.disabled) act.click(); return;
