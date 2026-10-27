@@ -141,6 +141,21 @@ main.home .wrap { padding-block: 28px 48px; display: grid; gap: 28px; }
   .final > svg { display: none; }
   .final .actions { justify-items: stretch; }
 }
+.figbtns { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.figbtn {
+  display: grid; grid-template-columns: 104px 1fr; gap: 14px; align-items: center; text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; min-width: 0;
+}
+.figbtn:hover { border-color: var(--accent); }
+.figbtn .th { width: 104px; height: 84px; background: var(--plate); border-radius: 6px; overflow: hidden; display: grid; place-items: center; border: 1px solid var(--line); }
+.figbtn .th svg { width: 100%; height: 100%; display: block; }
+.figbtn .tx { display: grid; gap: 4px; min-width: 0; }
+.figbtn b { font-family: var(--f-display); font-size: 21px; text-transform: uppercase; line-height: 1.05; letter-spacing: .01em; }
+.figbtn small { color: var(--muted); font-size: 14px; line-height: 1.35; }
+.figbtn .go { font-family: var(--f-mono); font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: .04em; }
+.lg { list-style: none; margin: 0; padding: 12px 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 16px; background: var(--surface-2); border-radius: 8px; font-weight: 600; }
+.lg li { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.lg .n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-mono); background: #c99634; color: #1c2521; flex: none; font-size: 13px; }
 .note { color: var(--muted); font-size: 14px; margin: 0; max-width: 70ch; }
 
 /* ---------- Botones ---------- */
@@ -236,7 +251,7 @@ main.quiz .wrap { padding-block: 22px 56px; }
 
 /* figuras */
 .plate { background: var(--plate); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.plate svg { display: block; width: 100%; height: auto; }
+.plate svg { display: block; width: 100%; height: auto; max-height: 640px; }
 .plate .lead-l { stroke: var(--plate-line); stroke-width: 1.6; }
 .plate .lead-h { stroke: var(--plate); stroke-width: 5; stroke-linecap: round; }
 .plate .tdot { fill: var(--plate-ink); stroke: var(--plate); stroke-width: 2; }
@@ -1038,6 +1053,13 @@ function parseFill(text) {
 }
 UNITS.forEach(u => u.questions.forEach((q, i) => { q.uid = u.id; q.key = u.id + "-" + i; }));
 
+/* ---------- Imágenes para repasar ---------- */
+const FIG_PRACTICE = [
+  { key: "beretta", title: "Partes de la pistola", sub: "Beretta 92 FS · vista del lado izquierdo" },
+  { key: "cartucho", title: "Partes del cartucho", sub: "Munición 9 × 19 mm" },
+  { key: "anima", title: "Calibre real y nominal", sub: "Corte del cañón estriado" }
+];
+
 /* ---------- Estado ---------- */
 let S = null;
 let timerId = null;
@@ -1063,11 +1085,15 @@ function startQuiz(kind, payload) {
     let rest = FINAL_N - quotas.reduce((a, b) => a + b, 0);
     shuffle(UNITS.map((_, i) => i)).slice(0, rest).forEach(i => quotas[i]++);
     qs = shuffle(UNITS.flatMap((u, i) => shuffle(u.questions).slice(0, quotas[i])));
+  } else if (kind === "fig") {
+    const f = FIG_PRACTICE.find(x => x.key === payload);
+    id = "fig-" + f.key; title = f.title; sub = "Repaso de imagen";
+    qs = [UNITS.flatMap(u => u.questions).find(q => q.t === "label" && q.fig === f.key)];
   } else {
     id = payload.id; title = payload.title; sub = "Repaso de errores";
     qs = shuffle(payload.qs);
   }
-  S = { kind, id, title, sub, views: qs.map(prepare), i: 0, res: [], t0: Date.now(), limit, done: false, timeout: false, checked: false };
+  S = { kind, figKey: kind === "fig" ? payload : null, id, title, sub, views: qs.map(prepare), i: 0, res: [], t0: Date.now(), limit, done: false, timeout: false, checked: false };
   renderQuiz();
   clearInterval(timerId); timerId = setInterval(tick, 500); tick();
   window.scrollTo(0, 0);
@@ -1146,6 +1172,14 @@ function renderHome() {
       <h2 class="sec-title">Por unidad <small>${total} preguntas en total · el orden cambia en cada intento</small></h2>
       <div class="grid">${cards}</div>
     </section>
+    <section style="display:grid;gap:14px">
+      <h2 class="sec-title">Imágenes para repasar <small>identificá las partes · podés mostrar los nombres para estudiar</small></h2>
+      <div class="figbtns">${FIG_PRACTICE.map(f => `
+        <button class="figbtn" id="fig-${f.key}" data-fig="${f.key}">
+          <span class="th">${figSVG(f.key)}</span>
+          <span class="tx"><b>${esc(f.title)}</b><small>${esc(f.sub)} · ${FIGS[f.key].targets.length} partes</small><span class="go">Practicar →</span></span>
+        </button>`).join("")}</div>
+    </section>
     <section class="final">
       ${anchorsIcon(84)}
       <div><h3>Examen final</h3><p>${FINAL_N} preguntas sorteadas de las 6 unidades. Cada intento trae preguntas distintas.${bf != null ? ` <span class="best ${bf >= PASS ? "pass" : "fail"}" style="font-family:var(--f-mono);font-size:13px">Mejor: ${bf} %</span>` : ""}</p></div>
@@ -1157,6 +1191,7 @@ function renderHome() {
     <p class="note">Material de estudio para alumnos. No es un HTML oficial de la Prefectura Naval Argentina.</p>
   </div></main>`;
   $$("[data-unit]").forEach(b => b.onclick = () => startQuiz("unit", b.dataset.unit));
+  $$("[data-fig]").forEach(b => b.onclick = () => startQuiz("fig", b.dataset.fig));
   $("#go-final").onclick = () => startQuiz("final", { timed: $("#timed").checked });
   window.scrollTo(0, 0);
 }
@@ -1214,7 +1249,8 @@ function renderQuestion() {
     hint = "Elegí el nombre que corresponde a cada número. Hay nombres de más que no van.";
     const F = FIGS[q.fig];
     const names = [...F.targets.map(t => t.name), ...F.extra].sort((a, b) => a.localeCompare(b, "es"));
-    body = `<div class="plate" id="fig"></div>
+    const legend = S.kind === "fig" ? `<ol class="lg" id="legend" hidden>${F.targets.slice().sort((a, b) => a.n - b.n).map(t => `<li><span class="n">${t.n}</span>${esc(t.name)}</li>`).join("")}</ol>` : "";
+    body = `<div class="plate" id="fig"></div>${legend}
       <div class="lrows">${F.targets.slice().sort((a, b) => a.n - b.n).map(t => `
         <div class="lrow" data-n="${t.n}"><span class="n">${t.n}</span><div style="display:grid;gap:2px;min-width:0">
           <select id="sel-${S.i}-${t.n}" aria-label="Parte número ${t.n}"><option value="">Elegí…</option>${names.map(nm => `<option>${esc(nm)}</option>`).join("")}</select>
@@ -1229,11 +1265,16 @@ function renderQuestion() {
       ${body}
     </div>
     <div class="fb" id="fb" hidden></div>
-    <div class="qactions"><span class="kbd">${q.t === "mc" ? "Teclas A–D y Enter" : q.t === "tf" ? "Teclas V / F y Enter" : "Enter para comprobar"}</span>
+    <div class="qactions">${S.kind === "fig" ? `<button class="btn" id="names" style="margin-right:auto" aria-pressed="false">Mostrar nombres</button>` : `<span class="kbd">${q.t === "mc" ? "Teclas A–D y Enter" : q.t === "tf" ? "Teclas V / F y Enter" : "Enter para comprobar"}</span>`}
       <button class="btn primary" id="act">Comprobar</button></div>
   </article>`;
   drawFig(v);
   wireQuestion(v);
+  const nb = $("#names");
+  if (nb) nb.onclick = () => {
+    const lg = $("#legend"), show = lg.hidden;
+    lg.hidden = !show; nb.textContent = show ? "Ocultar nombres" : "Mostrar nombres"; nb.setAttribute("aria-pressed", String(show));
+  };
   const first = $("#qwrap input, #qwrap select");
   if (first && window.matchMedia("(pointer:fine)").matches) first.focus({ preventScroll: true });
 }
@@ -1417,7 +1458,7 @@ function finish() {
   S.views.forEach((v, i) => { if (S.res[i] == null) { S.res[i] = 0; v.skipped = true; } });
   const pts = S.res.reduce((a, b) => a + b, 0), n = S.views.length;
   const pct = Math.round((pts / n) * 100);
-  if (S.kind !== "retry") store.set(S.id, pct);
+  if (S.kind === "unit" || S.kind === "final") store.set(S.id, pct);
   renderResults(pts, n, pct);
 }
 
@@ -1514,8 +1555,8 @@ function renderResults(pts, n, pct) {
   $("#tab-all").onclick = () => setTab(false);
   setTab(wrong.length > 0);
   $("#home2").onclick = renderHome; $("#home3").onclick = renderHome;
-  const prev = { kind: S.kind, id: S.id, title: S.title };
-  $("#again").onclick = () => prev.kind === "final" ? startQuiz("final", { timed: S.limit > 0 }) : prev.kind === "unit" ? startQuiz("unit", prev.id) : startQuiz("retry", { id: prev.id, title: prev.title, qs: S.views.map(v => v.q) });
+  const prev = { kind: S.kind, id: S.id, title: S.title, figKey: S.figKey };
+  $("#again").onclick = () => prev.kind === "final" ? startQuiz("final", { timed: S.limit > 0 }) : prev.kind === "unit" ? startQuiz("unit", prev.id) : prev.kind === "fig" ? startQuiz("fig", prev.figKey) : startQuiz("retry", { id: prev.id, title: prev.title, qs: S.views.map(v => v.q) });
   if (wrong.length) $("#retry-wrong").onclick = () => startQuiz("retry", { id: prev.id, title: prev.title, qs: wrong.map(v => v.q) });
   window.scrollTo(0, 0);
 }
