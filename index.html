@@ -185,6 +185,22 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .prog i { display: block; height: 100%; background: var(--accent); transition: width .25s ease; }
 
 main.quiz .wrap { padding-block: 22px 56px; }
+#app.wide .wrap { max-width: 1320px; }
+.lwrap { display: grid; gap: 16px; }
+.lfig { display: grid; gap: 12px; min-width: 0; }
+@media (min-width: 1000px) {
+  .lwrap { grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr); grid-template-areas: "fig modes" "fig rows"; grid-template-rows: auto 1fr; align-items: start; column-gap: 20px; row-gap: 12px; }
+  .lwrap .lfig { grid-area: fig; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 74px); }
+  .lwrap .modes { grid-area: modes; width: 100%; }
+  .lwrap .modes button { font-size: 20px; min-height: 50px; padding: 10px 8px; }
+  .lwrap .lrows { grid-area: rows; grid-template-columns: 1fr; gap: 6px; align-content: start; }
+  .lwrap .lrow select, .lwrap .lrow .lin { min-height: 40px; padding-block: 6px; }
+  .lwrap .plate svg { max-height: max(360px, calc(100vh - 230px)); }
+  .lwrap.many { grid-template-columns: minmax(0, 1.45fr) minmax(400px, 1fr); }
+  .lwrap.many .lrows { grid-template-columns: 1fr 1fr; column-gap: 10px; }
+  .lwrap.many .lrow { grid-template-columns: 30px 1fr; gap: 6px; }
+  .lwrap.many .lrow .n { width: 28px; height: 28px; font-size: 13px; }
+}
 .qcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; }
 .qhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px dashed var(--line); flex-wrap: wrap; }
 .qnum { font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -273,10 +289,11 @@ main.quiz .wrap { padding-block: 22px 56px; }
 .lrow .lin:focus { outline: none; border-color: var(--accent); background: var(--accent-soft); }
 .lrow.ok .lin { border-color: var(--ok); background: var(--ok-soft); }
 .lrow.bad .lin { border-color: var(--bad); background: var(--bad-soft); text-decoration: line-through; }
-.modes { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--surface-2); border-radius: 10px; justify-self: start; }
-.modes button { border: 0; background: transparent; border-radius: 7px; padding: 8px 14px; font-weight: 600; font-size: 15px; min-height: 40px; color: var(--muted); }
-.modes button small { font-family: var(--f-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-left: 4px; color: var(--bad); }
-.modes button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 6px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; width: min(100%, 480px); }
+.modes button { border: 0; background: transparent; border-radius: 8px; padding: 12px 18px; font-family: var(--f-display); font-weight: 700; font-size: 22px; letter-spacing: .03em; text-transform: uppercase; min-height: 56px; color: var(--muted); }
+.modes button:hover { color: var(--ink); }
+.modes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow); }
+@media (max-width: 560px) { .modes button { font-size: 19px; padding: 10px 6px; min-height: 52px; } }
 .lrow.bad select { border-color: var(--bad); background: var(--bad-soft); }
 
 /* devolución */
@@ -1210,7 +1227,7 @@ function rulesThumb() {
 }
 
 function renderHome() {
-  clearInterval(timerId); S = null;
+  clearInterval(timerId); S = null; app().classList.remove("wide");
   const best = store.get();
   const total = UNITS.reduce((a, u) => a + u.questions.length, 0);
   const cards = UNITS.map(u => {
@@ -1326,16 +1343,17 @@ function renderQuestion() {
     const names = [...F.targets.map(t => t.name), ...F.extra].sort((a, b) => a.localeCompare(b, "es"));
     const legend = S.kind === "fig" ? `<ol class="lg" id="legend" hidden>${F.targets.slice().sort((a, b) => a.n - b.n).map(t => `<li><span class="n">${t.n}</span>${esc(t.name)}</li>`).join("")}</ol>` : "";
     const modes = S.kind === "fig" ? `<div class="modes" role="group" aria-label="Dificultad">
-        <button type="button" data-mode="select" aria-pressed="${!write}">Elegir de la lista</button>
-        <button type="button" data-mode="write" aria-pressed="${write}">Escribir los nombres <small>difícil</small></button></div>` : "";
-    body = `${modes}<div class="plate" id="fig"></div>${legend}
+        <button type="button" data-mode="select" aria-pressed="${!write}">Seleccionar</button>
+        <button type="button" data-mode="write" aria-pressed="${write}">Escribir</button></div>` : "";
+    body = `<div class="lwrap${F.targets.length > 8 ? " many" : ""}">${modes}<div class="lfig"><div class="plate" id="fig"></div>${legend}</div>
       <div class="lrows">${F.targets.slice().sort((a, b) => a.n - b.n).map(t => `
         <div class="lrow" data-n="${t.n}"><span class="n">${t.n}</span><div style="display:grid;gap:2px;min-width:0">
           ${write
             ? `<input class="lin" id="sel-${S.i}-${t.n}" aria-label="Nombre de la parte número ${t.n}" placeholder="Escribí el nombre…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">`
             : `<select id="sel-${S.i}-${t.n}" aria-label="Parte número ${t.n}"><option value="">Elegí…</option>${names.map(nm => `<option>${esc(nm)}</option>`).join("")}</select>`}
-        </div></div>`).join("")}</div>`;
+        </div></div>`).join("")}</div></div>`;
   }
+  app().classList.toggle("wide", q.t === "label");
   $("#qwrap").innerHTML = `
   <article class="qcard">
     <div class="qhead"><span class="qnum">Pregunta ${S.i + 1} de ${n}</span><span class="chip">${TYPE_LABEL[q.t]}</span></div>
@@ -1582,6 +1600,7 @@ function correctSummary(q) {
 }
 
 function renderResults(pts, n, pct) {
+  app().classList.remove("wide");
   const pass = pct >= PASS;
   const ok = S.res.filter(x => x === 1).length, bad = S.res.filter(x => x === 0).length, part = n - ok - bad;
   const byType = {}, byUnit = {};
