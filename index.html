@@ -450,16 +450,7 @@ const UNITS = [
       src: "Ley de Armas" },
     { t: "tf", q: "Las armas propias son objetos de uso común que pueden utilizarse para atacar o defenderse.", a: false,
       exp: "Falso. Esa es la definición de armas IMPROPIAS. Las propias fueron creadas específicamente para atacar o defender (pistola, fusil, escopeta).",
-      src: "Concepto de arma" },
-    { t: "fill", q: "Completá el concepto de arma.",
-      text: "Se entiende por arma a todo instrumento, medio o mecanismo destinado a {{atacar}} o {{defenderse}}, cuya finalidad es neutralizar, {{lesionar}} o {{intimidar}} a una persona o producir daño sobre un objetivo.",
-      exp: "Definición textual del material.", src: "Concepto de arma" },
-    { t: "fill", q: "Completá el régimen legal de armas.",
-      text: "En la República Argentina, el régimen legal de armas está regulado por la Ley Nacional de Armas y Explosivos N.° {{20.429|20429}} y su reglamentación mediante el Decreto {{395/75}}. La autoridad de aplicación y control es el {{RENAR}}.",
-      exp: "Ley 20.429, Decreto 395/75 y RENAR (Registro Nacional de Armas).", src: "Ley de Armas" },
-    { t: "fill", q: "Completá la definición de armas largas.",
-      text: "Son aquellas que requieren el apoyo del {{hombro}} para su utilización y generalmente se emplean con ambas {{manos}}. Tipos principales: fusil, {{carabina}}, escopeta y {{subfusil}}.",
-      exp: "Armas largas: apoyo del hombro, ambas manos. Tipos: fusil, carabina, escopeta y subfusil.", src: "Armas largas" }
+      src: "Concepto de arma" }
   ]
 },
 {
@@ -549,12 +540,6 @@ const UNITS = [
     { t: "fill", q: "Completá las cuatro reglas de oro de seguridad.",
       text: "1. No dirigir la boca del tubo {{cañón}} a nada, ni a nadie, que no desea {{dañar}}.\n2. Considerar a toda arma {{cargada}} y sin {{seguro}}, aun sabiendo que no lo está.\n3. Presionar la cola disparadora, solo cuando estoy seguro de mi {{blanco}}, sabiendo lo que hay por delante, por detrás y en ambos {{laterales}}.\n4. Mantener el {{dedo}} fuera del arco {{guardamonte}}, siempre y en todo momento hasta tener identificado el blanco.",
       exp: "Las cuatro reglas de oro, textuales del material.", src: "Medidas de seguridad · reglas de oro" },
-    { t: "fill", q: "Completá lo referido a la protección auditiva.",
-      text: "La exposición reiterada al ruido puede producir: pérdida auditiva {{permanente}}, {{zumbidos}} y fatiga {{auditiva}}. Los protectores de {{copa}} ofrecen mayor nivel de aislamiento.",
-      exp: "Riesgos: pérdida auditiva permanente, zumbidos y fatiga auditiva. Los de copa aíslan más.", src: "Protección auditiva" },
-    { t: "fill", q: "Completá la verificación en el procedimiento de descarga.",
-      text: "Se acciona la corredera varias veces (verificación {{mecánica}}), se inspecciona la recámara con la vista (verificación {{visual}}) y se comprueba al tacto (verificación {{táctil}}).",
-      exp: "Mecánica, visual y táctil, en ese orden dentro del procedimiento de descarga.", src: "Procedimiento de descarga" },
     { t: "order", q: "Ordená el procedimiento de descarga.",
       items: ["Dirección segura", "Retirar cargador", "Accionar la corredera varias veces", "Inspeccionar visualmente la recámara", "Verificar táctilmente", "Cerrar corredera", "Presentar arma descargada y enfundar"],
       exp: "Primero dirección segura y retirar el cargador; recién después se acciona la corredera. Si se acciona la corredera con el cargador puesto, se vuelve a alimentar un cartucho.",
@@ -644,23 +629,7 @@ const UNITS = [
       src: "Simple y doble acción" },
     { t: "tf", q: "En doble acción, el martillo debe montarse con el pulgar antes de presionar la cola disparadora.", a: false,
       exp: "Falso. En doble acción la propia cola disparadora monta el martillo. Montarlo antes (con el pulgar o por el retroceso de la corredera) es dejarlo en simple acción.",
-      src: "Simple y doble acción" },
-    { t: "fill", q: "Completá la diferencia entre simple y doble acción.",
-      text: "En {{simple}} acción el martillo ya está montado y la cola disparadora solo lo libera. En {{doble}} acción la cola disparadora primero {{monta|arma|amartilla}} el martillo y después lo {{libera|suelta}}.",
-      exp: "Simple acción: una sola acción (liberar). Doble acción: dos acciones (montar y liberar).", src: "Simple y doble acción" },
-    { t: "fill", q: "Completá la ficha técnica.",
-      text: "Origen: {{Italia}}. Calibre: {{9x19|9x19mm}} mm. Cargador de quita y pon con capacidad de {{15|quince}} cartuchos. Aparato de puntería: guion y {{alza}} regulable en deriva. Estrías: {{6|seis}} de paso derecho. Particularidades: {{doble}} y simple acción.",
-      exp: "Ficha técnica de la presentación: Italia, 9×19 mm, 15 cartuchos, guion y alza, 6 estrías de paso derecho, doble y simple acción.", src: "Ficha técnica" },
-    { t: "fill", q: "Completá la descripción del cargador.",
-      text: "Tiene forma de estuche metálico, con capacidad para {{15|quince}} cartuchos. Está compuesto por: depósito, {{elevador}}, {{muelle|resorte}}, {{enganche}} y tapón. Posee un indicador de tres orificios numerados con 5, 10 y {{15|quince}}.",
-      anyOrder: [[1, 2, 3]],
-      exp: "Cargador: 15 cartuchos; depósito, elevador, muelle, enganche y tapón; indicador con orificios 5, 10 y 15.", src: "Cargador" },
-    { t: "fill", q: "Completá el desarme de campaña.",
-      text: "La parte {{móvil}} está formada por la corredera, el tubo cañón y el resorte recuperador con su guía. La parte {{fija}} es el {{armazón}}.",
-      exp: "Parte móvil: corredera, tubo cañón, resorte recuperador y su guía. Parte fija: armazón.", src: "Desarme de campaña" },
-    { t: "fill", q: "Completá la posición de tiro de la presentación de la Beretta.",
-      text: "Brazos {{extendidos}}, piernas {{semiflexionadas|semi flexionadas|semifleccionadas}}, punteras de los pies hacia {{delante|adelante}} y pies al ancho de {{hombros}}.",
-      exp: "Brazos extendidos, piernas semiflexionadas, punteras hacia delante y pies al ancho de hombros.", src: "Beretta 92 · Posición de tiro" }
+      src: "Simple y doble acción" }
   ]
 },
 {
@@ -712,15 +681,6 @@ const UNITS = [
       exp: "Falso. Las piernas van SEMIFLEXIONADAS.", src: "Beretta 92 · Posición de tiro" },
     { t: "tf", q: "En el empuñamiento a dos manos, la mano de apoyo realiza un sobre empuñamiento.", a: true,
       exp: "Verdadero.", src: "Empuñamiento" },
-    { t: "fill", q: "Completá el ABC de tiro (carpa sioux).",
-      text: "A: una buena {{postura}} del cuerpo ({{50}} %). B: posición de los {{brazos}}, bien firmes ({{20}} %). C: un buen {{empuñamiento|grip}} o grip ({{20}} %). El {{10}} % restante son factores {{externos}}.",
-      exp: "A 50 % postura · B 20 % brazos · C 20 % empuñamiento · 10 % factores externos.", src: "ABC de tiro: carpa sioux" },
-    { t: "fill", q: "Completá la técnica de presión sobre la cola disparadora.",
-      text: "El dedo índice debe moverse suavemente hacia el {{interior}} de la mano, sin que esta modifique su presión sobre la {{empuñadura}}. Se utiliza la primera {{falange}} (yema del dedo) del índice de la mano {{hábil}}.",
-      exp: "Texto del material sobre la presión en la cola disparadora.", src: "Presión sobre la cola disparadora" },
-    { t: "fill", q: "Completá la descripción del empuñamiento.",
-      text: "La mano envuelve la empuñadura sujetándola con la fuerza adecuada; el dedo índice se ubica apoyado fuera del arco {{guardamonte}} y el {{pulgar}} paralelo a la {{corredera}}.",
-      exp: "Índice fuera del guardamonte, pulgar paralelo a la corredera.", src: "Empuñamiento" },
     { t: "order", q: "Ordená los cinco puntos para lograr un tiro eficaz, como los presenta el material.",
       items: ["Empuñar bien el arma", "Correcta postura de tiro", "Control de la respiración", "Correcta utilización de los aparatos de puntería", "Presión de la cola disparadora"],
       exp: "1 empuñar, 2 postura, 3 respiración, 4 aparatos de puntería, 5 presión de la cola disparadora.",
@@ -794,19 +754,7 @@ const UNITS = [
     { t: "tf", q: "La balística exterior estudia el proyectil desde que sale de la boca del cañón hasta que impacta sobre un objetivo.", a: true,
       exp: "Verdadero.", src: "Balística exterior" },
     { t: "tf", q: "El paso del proyectil por el estriado forma parte de la balística exterior.", a: false,
-      exp: "Falso. Ocurre dentro del arma: es el paso 9 de la secuencia del disparo, que estudia la balística INTERIOR.", src: "Balística interior · Secuencia del disparo" },
-    { t: "fill", q: "Completá el concepto de balística.",
-      text: "La balística es la ciencia que estudia el comportamiento de los {{proyectiles}} desde el momento en que son disparados, durante su {{trayectoria}} y hasta que {{impactan}} sobre un objetivo.",
-      exp: "Definición textual del material.", src: "Balística · Concepto" },
-    { t: "fill", q: "Completá la división de la balística.",
-      text: "La balística se divide en: balística {{interior}}, balística {{exterior}} y balística de efectos o {{terminal}}.",
-      exp: "Interior, exterior y de efectos o terminal.", src: "División de la balística" },
-    { t: "fill", q: "Completá las fuerzas que actúan sobre el proyectil.",
-      text: "La {{gravedad}} provoca la caída progresiva del proyectil; la {{resistencia}} del aire reduce la velocidad; el {{viento}} puede desviar la trayectoria y la rotación {{giroscópica}} otorga estabilidad.",
-      exp: "Gravedad, resistencia del aire, viento y rotación giroscópica.", src: "Balística exterior" },
-    { t: "fill", q: "Completá los alcances.",
-      text: "Alcance {{efectivo}}: distancia a la que se puede impactar con precisión. Alcance {{máximo}}: distancia máxima que puede recorrer el proyectil. Alcance {{peligroso}}: distancia a la que aún puede causar lesiones o la muerte.",
-      exp: "Efectivo, máximo y peligroso.", src: "Trayectoria · Alcances" }
+      exp: "Falso. Ocurre dentro del arma: es el paso 9 de la secuencia del disparo, que estudia la balística INTERIOR.", src: "Balística interior · Secuencia del disparo" }
   ]
 },
 {
@@ -878,16 +826,7 @@ const UNITS = [
     { t: "tf", q: "En el siglo XVI el calibre se obtenía tomando como referencia una libra de plomo.", a: true,
       exp: "Verdadero. En el siglo XVI los proyectiles eran esféricos y el calibre se tomaba con referencia a una libra de plomo.", src: "Balas esféricas" },
     { t: "tf", q: "Los proyectiles cilindro-cónicos aparecieron en el siglo XVII para las primeras armas rayadas.", a: false,
-      exp: "Falso. Aparecieron en el siglo XIX. El XVII es el de la unificación de calibres.", src: "Balas cilindro-cónicas" },
-    { t: "fill", q: "Completá la definición de calibre.",
-      text: "Es la medida del {{diámetro}} anterior del cañón, limitado por las paredes internas del {{ánima}}. Para convertir: 1 pulgada equivale a {{25,4|25.4}} mm.",
-      exp: "Diámetro, ánima, 25,4 mm.", src: "¿Qué es el calibre?" },
-    { t: "fill", q: "Completá la evolución de los proyectiles.",
-      text: "En el siglo {{XVI|16}} los proyectiles fueron esféricos. Posteriormente, en el siglo {{XIX|19}}, aparecieron los proyectiles {{cilindro-cónicos}} para las primeras armas {{rayadas|estriadas}}.",
-      exp: "Siglo XVI esféricos; siglo XIX cilindro-cónicos para armas rayadas.", src: "Balas esféricas y cilindro-cónicas" },
-    { t: "fill", q: "Completá el calibre 9 × 19 mm.",
-      text: "Se obtiene por un sistema métrico exacto: el proyectil tiene un {{diámetro}} de 9 mm y la {{vaina}} mide 19 mm de {{largo}}.",
-      exp: "9 mm de diámetro del proyectil, 19 mm de largo de vaina.", src: "Calibre 9 × 19 mm" }
+      exp: "Falso. Aparecieron en el siglo XIX. El XVII es el de la unificación de calibres.", src: "Balas cilindro-cónicas" }
   ]
 }
 ];
