@@ -2663,6 +2663,14 @@ const ALFABETO = "Alpha Bravo Charlie Delta Echo Foxtrot Golf Hotel India Juliet
   .split(" ").map(w => ({ a: w[0], b: w, g: "l" }));
 ALFABETO.forEach(l => { l.exp = `${l.a}: ${l.b}.`; });
 
+/* Códigos Q de radiocomunicación (de la imagen que pasó el alumno). */
+const CODIGOS_Q = [
+  ["QAM", "Estado del tiempo"], ["QAP", "Estar atento"], ["QRA", "Nombre del operador"], ["QRB", "Distancia"],
+  ["QRU", "¿Tiene algo para mí?"], ["QRL", "Frecuencia ocupada"], ["QRV", "Estoy listo"], ["QRX", "Aguarde"],
+  ["QSA", "¿Cómo está la señal?"], ["QSJ", "Valores, dinero"], ["QSL", "Recibido, entendido"], ["QTA", "Cancelo mensaje"],
+  ["QTC", "Tengo un mensaje"], ["QTH", "Lugar, localización"], ["QTM", "¿Su posición?"], ["QTR", "Horario exacto"], ["QTZ", "Seguir búsqueda"]
+].map(([a, b]) => ({ a, b, g: "q", exp: `${a}: ${b}.` }));
+
 /* ---------- Dibujos ---------- */
 function cartridgeArt() {
   /* Escala 18 px/mm, base en x=110, eje en y=200. Mitad superior en corte, mitad inferior vista exterior. */
@@ -2839,13 +2847,14 @@ const SUBJECTS = {
     lead: `Preguntas armadas con el material de las Unidades 1, 2, 3, 4 y 6 del programa (la Unidad 3 en dos partes: cargos y jerarquías). <b>Modo estudio:</b> después de cada respuesta ves la corrección, la explicación y, cuando ayuda, un ejemplo. Se aprueba con <b>${PASS} %</b>.`,
     types: ["Opción múltiple", "Verdadero o falso", "Insignias"],
     finalTxt: `${FINAL_N} preguntas sorteadas de todas las unidades.`,
-    quickTxt: "insignias, siglas, Prefecturas de Zona, uniformes y alfabeto fonético",
+    quickTxt: "insignias, siglas, Prefecturas de Zona, uniformes, alfabeto fonético y códigos Q",
     quick: [
       { deck: "insignias", mode: "img", title: "Insignias", small: "Mirás la insignia y elegís la jerarquía", thumb: () => `<img src="${INSIG.op}" alt="">` },
       { deck: "siglas", mode: "mix", title: "Siglas de jerarquías", small: "PG, OX, AI… en los dos sentidos", thumb: () => tokensThumb(["PG", "OX", "AI", "CS"]) },
       { deck: "zonas", mode: "mix", title: "Prefecturas de Zona", small: "Las 10 zonas con su sede, en los dos sentidos", thumb: () => pinsThumb() },
       { deck: "uniformes", mode: "mix", title: "Uniformes por número", small: "Del N° 1 al N° 9, con su uso", thumb: () => tokensThumb(["N° 4", "N° 5", "N° 8", "N° 9"]) },
-      { deck: "alfabeto", mode: "mix", title: "Alfabeto fonético", small: "Letra ↔ palabra: Alpha, Bravo, Charlie…", thumb: () => tokensThumb(["A", "B", "C", "Z"]) }
+      { deck: "alfabeto", mode: "mix", title: "Alfabeto fonético", small: "Letra ↔ palabra: Alpha, Bravo, Charlie…", thumb: () => tokensThumb(["A", "B", "C", "Z"]) },
+      { deck: "codigosq", mode: "mix", title: "Códigos Q", small: "Radiocomunicación: QTH, QSL, QAP… en los dos sentidos", thumb: () => tokensThumb(["QTH", "QSL", "QAP", "QRV"]) }
     ]
   },
   tya: {
@@ -2876,6 +2885,8 @@ const DECKS = {
     qab: it => `¿Qué jerarquía es «${it.a}»?`, qba: it => `¿Cuál es la sigla de ${it.b}?`, sub: { mix: "Sigla ↔ jerarquía" } },
   zonas: { title: "Prefecturas de Zona", n: 10, items: ZONAS,
     qab: it => `¿Dónde tiene su sede la ${it.a}?`, qba: it => `¿Qué Prefectura de Zona tiene su sede en ${it.b}?`, sub: { mix: "Zona ↔ sede" } },
+  codigosq: { title: "Códigos Q de radiocomunicación", n: 15, items: CODIGOS_Q,
+    qab: it => `¿Qué significa el código «${it.a}»?`, qba: it => `¿Qué código Q significa «${it.b}»?`, sub: { mix: "Código ↔ significado" } },
   alfabeto: { title: "Alfabeto fonético", n: 15, items: ALFABETO,
     qab: it => `¿Qué palabra corresponde a la letra «${it.a}»?`, qba: it => `¿Qué letra se dice «${it.b}»?`, sub: { mix: "Letra ↔ palabra" } },
   uniformes: { title: "Uniformes por número", n: 9, items: UNIFORMES,

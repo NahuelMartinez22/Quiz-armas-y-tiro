@@ -3,7 +3,7 @@
 Preguntas para estudiar las materias del Curso de Formación Básica para Cuerpo Auxiliar 2026. Al entrar se ve un menú con las materias; cada una tiene sus unidades, repasos rápidos y un examen final.
 
 - **Régimen del Ejercicio de la Función Policial**: Unidades 1 a 4 (la 4 dividida en sus tres clases), con ejemplos en cada respuesta y el repaso «Cada delito en una línea».
-- **Organización y Reglamentos Internos**: Unidades 1, 2, 3 (cargos y jerarquías), 4 y 6, con repasos de insignias, siglas, Prefecturas de Zona, uniformes y alfabeto fonético.
+- **Organización y Reglamentos Internos**: Unidades 1, 2, 3 (cargos y jerarquías), 4 y 6, con repasos de insignias, siglas, Prefecturas de Zona, uniformes, alfabeto fonético y códigos Q.
 - **Tiro y Armas**: 6 unidades, con imágenes para identificar partes y las reglas de oro.
 - **Conocimientos Náuticos**: próximamente.
 
